@@ -1,7 +1,11 @@
 package coverage
 
 import (
+	"fmt"
 	"os"
+	"reflect"
+	"testing"
+	"time"
 )
 
 // DO NOT EDIT THIS FUNCTION
@@ -18,3 +22,324 @@ func init() {
 
 // WRITE YOUR CODE BELOW
 
+func TestLen(t *testing.T) {
+	p0 := &Person{}
+	p1 := &Person{}
+	p2 := &Person{}
+
+	people0 := People{*p0, *p1}
+	people1 := People{*p0, *p1, *p2}
+
+	l0 := people0.Len()
+	if l0 != 2 {
+		t.Errorf("expected length equal to 2, it turned out: %d", l0)
+	}
+
+	l1 := people1.Len()
+	if l1 != 3 {
+		t.Errorf("expected length equal to 3, it turned out: %d", l1)
+	}
+}
+
+func TestLess(t *testing.T) {
+	p0 := &Person{
+		firstName: "Alexandr",
+		lastName:  "Ivanov",
+		birthDay:  time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC),
+	}
+	p1 := &Person{
+		firstName: "Alexandr",
+		lastName:  "Sidorov",
+		birthDay:  time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC),
+	}
+	p2 := &Person{
+		firstName: "Ivan",
+		lastName:  "Ivanov",
+		birthDay:  time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC),
+	}
+	p3 := &Person{
+		firstName: "Petr",
+		lastName:  "Petrov",
+		birthDay:  time.Date(1992, time.January, 1, 0, 0, 0, 0, time.UTC),
+	}
+
+	tDate := map[string]struct {
+		i, j int
+		res  bool
+	}{
+		"Test Less success 1": {
+			i:   0,
+			j:   1,
+			res: true,
+		},
+		"Test Less error 1": {
+			i:   0,
+			j:   2,
+			res: false,
+		},
+		"Test Less success 2": {
+			i:   0,
+			j:   3,
+			res: false,
+		},
+		"Test Less error 2": {
+			i:   2,
+			j:   1,
+			res: true,
+		},
+	}
+
+	people0 := People{*p0, *p1, *p2, *p3}
+
+	for name, tcase := range tDate {
+		v := tcase
+			res := people0.Less(v.i, v.j)
+			if res != v.res {
+				t.Errorf("[%s] an error has occurred. Expected: \"%t\". Received: \"%t\"", name, v.res, res)
+			}
+	}
+}
+
+func TestSwap(t *testing.T) {
+
+	p0 := &Person{
+		firstName: "Ivan",
+		lastName:  "Ivanov",
+		birthDay:  time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC),
+	}
+	p1 := &Person{
+		firstName: "Petr",
+		lastName:  "Petrov",
+		birthDay:  time.Date(1992, time.January, 1, 0, 0, 0, 0, time.UTC),
+	}
+	p2 := &Person{}
+
+	people0 := People{
+		*p0,
+		*p1,
+		*p2,
+	}
+	people1 := People{
+		*p0,
+		*p1,
+		*p2,
+	}
+	people2 := People{
+		*p0,
+		*p1,
+		*p2,
+	}
+
+	b := []People{people0, people1, people2}
+
+	tDate := map[string]struct {
+		i, j int
+		res  People
+	}{
+		"Test Swap success 1": {
+			i:   0,
+			j:   1,
+			res: people1,
+		},
+		"Test Swap error 1": {
+			i:   1,
+			j:   2,
+			res: people2,
+		},
+	}
+
+	i := 1
+	for name, v := range tDate {
+		b[i].Swap(v.i, v.j)
+		if b[0][v.j] != b[i][v.i] && b[0][v.i] != b[i][v.j] {
+			t.Errorf("[%s] expected: %v ", name, v.res)
+		}
+		i++
+	}
+
+}
+
+func TestNewMatrix(t *testing.T) {
+	error1 := fmt.Errorf("Rows need to be the same length")
+
+	tDate := map[string]struct {
+		str      string
+		expected Matrix
+		err      error
+	}{
+		"Test New Matrix 0": {
+			str: "char",
+		},
+		"Test New Matrix 1": {
+			str: "   1 2 3 \n4 5 6",
+			expected: Matrix{
+				rows: 2,
+				cols: 3,
+				data: []int{1, 2, 3, 4, 5, 6},
+			},
+			err: nil,
+		},
+		"Test New Matrix 2": {
+			str: "1 2 3\n4 5",
+			err: error1,
+		},
+		"Test New Matrix 3": {
+			str: "1 2  3\n4 5",
+		},
+	}
+
+	for name, tCase := range tDate {
+		v := tCase
+
+		got, err := New(v.str)
+		if err != nil && err != v.err {
+			t.Errorf("[%s] an error occurred that was not expected: %s", name, err.Error())
+			continue
+		}
+
+		if !reflect.DeepEqual(got, &v.expected) {
+			t.Errorf("[%s] an error has occurred. Expected: %v. received: %d", name, &v.expected, got)
+		}
+
+	}
+}
+
+func TestRows(t *testing.T) {
+
+	tDate := map[string]struct {
+		char     string
+		expected [][]int
+	}{
+		"Test New Rows 0": {
+			char: " 4 5 6\n8 9 10",
+			expected: [][]int{
+				[]int{4, 5, 6},
+				[]int{8, 9, 10},
+			},
+		},
+	}
+
+	for name, tcase := range tDate {
+		a, _ := New(tcase.char)
+		c := a.Rows()
+
+		if !reflect.DeepEqual(c, tcase.expected) {
+			t.Errorf("[%s] expected: %d, received: %d", name, tcase.expected, c)
+		}
+
+	}
+
+}
+
+func TestCols(t *testing.T) {
+
+	tDate := map[string]struct {
+		char     string
+		expected [][]int
+	}{
+		"Test New Cols 0": {
+			char: " 3 2 1 \n6 5 7",
+			expected: [][]int{
+				[]int{3, 6},
+				[]int{2, 5},
+				[]int{1, 7},
+			},
+		},
+	}
+
+	for name, tcase := range tDate {
+		a, _ := New(tcase.char)
+		c := a.Cols()
+
+		if !reflect.DeepEqual(c, tcase.expected) {
+			t.Errorf("[%s] expected: %d, received: %d", name, tcase.expected, c)
+		}
+	}
+}
+
+func TestSet(t *testing.T) {
+	error1 := fmt.Errorf("row or col are out of range")
+	tDate := map[string]struct {
+		char     string
+		result   []int
+		expected bool
+		r, c, v  int
+		err      error
+	}{
+		"Test New Set 0": {
+			char:     " 5 2 5 \n4 1 7",
+			result:   []int{5, 2, 5, 4, 9, 7},
+			expected: true,
+			r:        1,
+			c:        1,
+			v:        9,
+		},
+		"Test New Set 1": {
+			char:     " 7 2 3 \n4 5 6",
+			result:   []int{7, 2, 3, 4, 5, 6},
+			expected: false,
+			r:        -1,
+			c:        1,
+			v:        9,
+			err:      error1,
+		},
+		"Test New Set 2": {
+			char:     "2 2 3 \n4 5 6",
+			result:   []int{2, 2, 3, 4, 5, 6},
+			expected: false,
+			r:        2,
+			c:        1,
+			v:        9,
+			err:      error1,
+		},
+		"Test New Set 3": {
+			char:     "8 2 3 \n4 5 6",
+			result:   []int{8, 2, 3, 4, 5, 6},
+			expected: false,
+			r:        4,
+			c:        1,
+			v:        9,
+			err:      error1,
+		},
+		"Test New Set 4": {
+			char:     "9 2 3 \n4 5 6",
+			result:   []int{9, 2, 3, 4, 5, 6},
+			expected: false,
+			r:        0,
+			c:        -1,
+			v:        9,
+			err:      error1,
+		},
+		"Test New Set 5": {
+			char:     "10 2 3 \n4 5 6",
+			result:   []int{10, 2, 3, 4, 5, 6},
+			expected: false,
+			r:        0,
+			c:        3,
+			v:        9,
+			err:      error1,
+		},
+		"Test New Set 6": {
+			char:     "65 2 3 \n4 5 6",
+			result:   []int{65, 2, 3, 4, 5, 6},
+			expected: false,
+			r:        0,
+			c:        5,
+			v:        9,
+			err:      error1,
+		},
+	}
+
+	for name, tcase := range tDate {
+		a, _ := New(tcase.char)
+		c := a.Set(tcase.r, tcase.c, tcase.v)
+
+		if c != tcase.expected {
+			t.Errorf("[%s] expected bool: %t, received: %t", name, tcase.expected, c)
+		}
+
+		if !reflect.DeepEqual(a.data, tcase.result) {
+			t.Errorf("[%s] expected: %v, received: %v", name, tcase.result, a.data)
+		}
+	}
+}
