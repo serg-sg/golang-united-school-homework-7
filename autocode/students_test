@@ -23,21 +23,19 @@ func init() {
 // WRITE YOUR CODE BELOW
 
 func TestLen(t *testing.T) {
-	p0 := &Person{}
-	p1 := &Person{}
-	p2 := &Person{}
+	var people People
 
-	people0 := People{*p0, *p1}
-	people1 := People{*p0, *p1, *p2}
-
-	l0 := people0.Len()
-	if l0 != 2 {
-		t.Errorf("expected length equal to 2, it turned out: %d", l0)
+	l := people.Len()
+	if l != 0 {
+		t.Errorf("expected length equal to 2, it turned out: %d", l)
 	}
 
-	l1 := people1.Len()
-	if l1 != 3 {
-		t.Errorf("expected length equal to 3, it turned out: %d", l1)
+	people = append(people, Person{})
+	people = append(people, Person{})
+
+	l = people.Len()
+	if people.Len() != 2 {
+		t.Errorf("expected length equal to 2, it turned out: %d", l)
 	}
 }
 
@@ -75,7 +73,7 @@ func TestLess(t *testing.T) {
 		"Test Less error 1": {
 			i:   0,
 			j:   2,
-			res: false,
+			res: true,
 		},
 		"Test Less success 2": {
 			i:   0,
@@ -85,7 +83,7 @@ func TestLess(t *testing.T) {
 		"Test Less error 2": {
 			i:   2,
 			j:   1,
-			res: true,
+			res: false,
 		},
 	}
 
@@ -93,10 +91,10 @@ func TestLess(t *testing.T) {
 
 	for name, tcase := range tDate {
 		v := tcase
-			res := people0.Less(v.i, v.j)
-			if res != v.res {
-				t.Errorf("[%s] an error has occurred. Expected: \"%t\". Received: \"%t\"", name, v.res, res)
-			}
+		res := people0.Less(v.i, v.j)
+		if res != v.res {
+			t.Errorf("[%s] an error has occurred. Expected: \"%t\". Received: \"%t\"", name, v.res, res)
+		}
 	}
 }
 
@@ -160,15 +158,21 @@ func TestSwap(t *testing.T) {
 }
 
 func TestNewMatrix(t *testing.T) {
-	error1 := fmt.Errorf("Rows need to be the same length")
+	error1 := "Rows need to be the same length"
+	error2 := "strconv.Atoi: parsing \"char\": invalid syntax"
 
 	tDate := map[string]struct {
 		str      string
 		expected Matrix
-		err      error
+		err      string
 	}{
 		"Test New Matrix 0": {
-			str: "char",
+			str: "6694 ",
+			expected: Matrix{
+				rows: 1,
+				cols: 1,
+				data: []int{6694},
+			},
 		},
 		"Test New Matrix 1": {
 			str: "   1 2 3 \n4 5 6",
@@ -177,24 +181,38 @@ func TestNewMatrix(t *testing.T) {
 				cols: 3,
 				data: []int{1, 2, 3, 4, 5, 6},
 			},
-			err: nil,
 		},
 		"Test New Matrix 2": {
-			str: "1 2 3\n4 5",
+			str: "1 2 3\n4 9",
+			expected: Matrix{
+				rows: 0,
+				cols: 0,
+				data: []int{},
+			},
 			err: error1,
 		},
 		"Test New Matrix 3": {
-			str: "1 2  3\n4 5",
+			str: "char",
+			expected: Matrix{
+				rows: 0,
+				cols: 0,
+				data: []int{},
+			},
+			err: error2,
 		},
 	}
 
 	for name, tCase := range tDate {
 		v := tCase
-
 		got, err := New(v.str)
-		if err != nil && err != v.err {
+
+		if err != nil && (err.Error() != v.err) {
 			t.Errorf("[%s] an error occurred that was not expected: %s", name, err.Error())
-			continue
+		}
+
+		if got == nil {
+			got = &Matrix{0, 0, []int{}}
+			fmt.Println("got =", got)
 		}
 
 		if !reflect.DeepEqual(got, &v.expected) {
